@@ -44,7 +44,7 @@ export default function RequestBloodPage() {
   const [success, setSuccess] = useState(false);
 
   const districts = getDistricts(divisionId);
-  const upazilas = getUpazilas(districtId);
+  const upazilas = getUpazilas(districtId, divisionId);
   const bloodGroups: BloodGroup[] = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
   const handleSubmit = (e: React.FormEvent) => {

@@ -62,7 +62,7 @@ export default function BecomeDonorPage() {
   const [createdDonor, setCreatedDonor] = useState<any>(null);
 
   const districts = getDistricts(divisionId);
-  const upazilas = getUpazilas(districtId);
+  const upazilas = getUpazilas(districtId, divisionId);
   const bloodGroups: BloodGroup[] = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
   // Age calculation helper

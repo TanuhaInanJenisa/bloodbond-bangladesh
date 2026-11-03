@@ -5,6 +5,8 @@ import { useRouter } from "next/navigation";
 import { useLanguage } from "@/context/LanguageContext";
 import {
   BANGLADESH_DIVISIONS,
+  BANGLADESH_DISTRICTS,
+  BANGLADESH_UPAZILAS,
   getDistricts,
   getUpazilas,
 } from "@/lib/data/bangladeshGeo";
@@ -20,7 +22,7 @@ export const HomeSearchBar: React.FC = () => {
   const [selectedBloodGroup, setSelectedBloodGroup] = useState<string>("");
 
   const availableDistricts = getDistricts(selectedDivision || undefined);
-  const availableUpazilas = getUpazilas(selectedDistrict || undefined);
+  const availableUpazilas = getUpazilas(selectedDistrict || undefined, selectedDivision || undefined);
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
@@ -62,9 +64,16 @@ export const HomeSearchBar: React.FC = () => {
           <select
             value={selectedDivision}
             onChange={(e) => {
-              setSelectedDivision(e.target.value);
-              setSelectedDistrict("");
-              setSelectedUpazila("");
+              const divId = e.target.value;
+              setSelectedDivision(divId);
+              // If current district doesn't belong to this division, reset it
+              if (divId) {
+                const distObj = BANGLADESH_DISTRICTS.find((d) => d.id === selectedDistrict);
+                if (distObj && distObj.divisionId !== divId) {
+                  setSelectedDistrict("");
+                  setSelectedUpazila("");
+                }
+              }
             }}
             className="w-full bg-transparent text-sm font-semibold text-foreground focus:outline-none cursor-pointer py-1"
           >
@@ -85,12 +94,19 @@ export const HomeSearchBar: React.FC = () => {
           </label>
           <select
             value={selectedDistrict}
-            disabled={!selectedDivision && availableDistricts.length === 0}
             onChange={(e) => {
-              setSelectedDistrict(e.target.value);
+              const distId = e.target.value;
+              setSelectedDistrict(distId);
+              if (distId) {
+                // Auto-fill division
+                const found = BANGLADESH_DISTRICTS.find((d) => d.id === distId);
+                if (found) {
+                  setSelectedDivision(found.divisionId);
+                }
+              }
               setSelectedUpazila("");
             }}
-            className="w-full bg-transparent text-sm font-semibold text-foreground focus:outline-none cursor-pointer py-1 disabled:opacity-50"
+            className="w-full bg-transparent text-sm font-semibold text-foreground focus:outline-none cursor-pointer py-1"
           >
             <option value="">{t("selectDistrict")}</option>
             {availableDistricts.map((dist) => (
@@ -109,9 +125,22 @@ export const HomeSearchBar: React.FC = () => {
           </label>
           <select
             value={selectedUpazila}
-            disabled={!selectedDistrict}
-            onChange={(e) => setSelectedUpazila(e.target.value)}
-            className="w-full bg-transparent text-sm font-semibold text-foreground focus:outline-none cursor-pointer py-1 disabled:opacity-50"
+            onChange={(e) => {
+              const upaId = e.target.value;
+              setSelectedUpazila(upaId);
+              if (upaId) {
+                // Auto-fill district and division
+                const foundUpa = availableUpazilas.find((u) => u.id === upaId) || BANGLADESH_UPAZILAS.find((u) => u.id === upaId);
+                if (foundUpa) {
+                  setSelectedDistrict(foundUpa.districtId);
+                  const foundDist = BANGLADESH_DISTRICTS.find((d) => d.id === foundUpa.districtId);
+                  if (foundDist) {
+                    setSelectedDivision(foundDist.divisionId);
+                  }
+                }
+              }
+            }}
+            className="w-full bg-transparent text-sm font-semibold text-foreground focus:outline-none cursor-pointer py-1"
           >
             <option value="">{t("selectThana")}</option>
             {availableUpazilas.map((upa) => (
@@ -154,4 +183,3 @@ export const HomeSearchBar: React.FC = () => {
     </div>
   );
 };
-

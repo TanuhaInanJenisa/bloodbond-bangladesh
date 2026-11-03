@@ -49,7 +49,7 @@ function DonorsSearchContent() {
   const [donors, setDonors] = useState<DonorProfile[]>([]);
 
   const districts = getDistricts(division || undefined);
-  const upazilas = getUpazilas(district || undefined);
+  const upazilas = getUpazilas(district || undefined, division || undefined);
   const bloodGroups = ["ALL", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
 
   useEffect(() => {
@@ -206,9 +206,17 @@ function DonorsSearchContent() {
               </label>
               <select
                 value={upazila}
-                disabled={!district}
-                onChange={(e) => setUpazila(e.target.value)}
-                className="w-full py-2 px-3 bg-muted/60 border border-border rounded-xl text-xs sm:text-sm text-foreground focus:outline-none disabled:opacity-50"
+                onChange={(e) => {
+                  const val = e.target.value;
+                  setUpazila(val);
+                  if (val) {
+                    const found = upazilas.find((u) => u.id === val);
+                    if (found && !district) {
+                      setDistrict(found.districtId);
+                    }
+                  }
+                }}
+                className="w-full py-2 px-3 bg-muted/60 border border-border rounded-xl text-xs sm:text-sm text-foreground focus:outline-none"
               >
                 <option value="">{t("selectThana")}</option>
                 {upazilas.map((upa) => (
