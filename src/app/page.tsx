@@ -11,6 +11,7 @@ import { HomeImpactSection } from "@/components/home/HomeImpactSection";
 import { HomeEmergencyRequests } from "@/components/home/HomeEmergencyRequests";
 import { HomeTopDonors } from "@/components/home/HomeTopDonors";
 import { HomeAwarenessSection } from "@/components/home/HomeAwarenessSection";
+import { HeroHeartPulse } from "@/components/home/HeroHeartPulse";
 
 export default function HomePage() {
   const { language, t } = useLanguage();
@@ -75,29 +76,9 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right Hero Graphic matching mockup */}
+            {/* Right Hero: Animated Red Heart with Running White Pulse */}
             <div className="lg:col-span-5 relative">
-              <div className="relative w-full aspect-[4/3] rounded-3xl overflow-hidden shadow-2xl border-4 border-white dark:border-neutral-800 group">
-                <Image
-                  src="/images/hero-banner.jpg"
-                  alt="BloodBond Bangladesh Hero Banner"
-                  fill
-                  className="object-cover object-center group-hover:scale-105 transition-transform duration-700"
-                  priority
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent flex items-end p-6">
-                  <div className="text-white space-y-1">
-                    <div className="text-xl font-black italic tracking-wide">
-                      Donate Blood, Save Lives
-                    </div>
-                    <div className="text-xs text-white/90">
-                      {language === "bn"
-                        ? "সরাসরি রক্তদাতাদের সাথে যোগাযোগ করুন নিরাপদ প্ল্যাটফর্মে"
-                        : "Connect with genuine voluntary blood donors nationwide."}
-                    </div>
-                  </div>
-                </div>
-              </div>
+              <HeroHeartPulse />
             </div>
           </div>
 
