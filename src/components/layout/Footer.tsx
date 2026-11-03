@@ -17,12 +17,13 @@ export const Footer: React.FC = () => {
           {/* Brand Info */}
           <div className="md:col-span-1 space-y-4">
             <div className="flex items-center gap-3">
-              <div className="relative w-10 h-10 flex-shrink-0">
+              <div className="w-10 h-10 flex-shrink-0">
                 <Image
                   src="/images/bloodbond-logo.png"
                   alt="BloodBond Logo"
-                  fill
-                  className="object-contain"
+                  width={40}
+                  height={40}
+                  className="w-10 h-10 object-contain"
                 />
               </div>
               <span className="font-extrabold text-xl text-white">

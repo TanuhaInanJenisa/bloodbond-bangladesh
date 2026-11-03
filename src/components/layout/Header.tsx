@@ -53,8 +53,9 @@ export const Header: React.FC = () => {
             <Image
               src="/images/bloodbond-logo.png"
               alt="BloodBond Bangladesh Logo"
-              fill
-              className="object-contain"
+              width={48}
+              height={48}
+              className="w-12 h-12 object-contain"
               priority
             />
           </div>

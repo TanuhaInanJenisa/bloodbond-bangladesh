@@ -93,3 +93,40 @@
   background-size: 24px 24px;
 }
 
+/* Heartbeat & Pulse Animations */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  14% {
+    transform: scale(1.07);
+  }
+  28% {
+    transform: scale(1);
+  }
+  42% {
+    transform: scale(1.09);
+  }
+  70% {
+    transform: scale(1);
+  }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.8s ease-in-out infinite;
+}
+
+.pulse-path {
+  stroke-dasharray: 60 180;
+  stroke-dashoffset: 240;
+  animation: pulseRun 1.8s linear infinite;
+}
+
+@keyframes pulseRun {
+  0% {
+    stroke-dashoffset: 240;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
+}

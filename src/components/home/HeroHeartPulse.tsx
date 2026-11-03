@@ -2,7 +2,7 @@
 
 import React from "react";
 import { useLanguage } from "@/context/LanguageContext";
-import { Heart, Activity, Droplet, Sparkles, ShieldCheck } from "lucide-react";
+import { Activity, Droplet, ShieldCheck } from "lucide-react";
 
 export const HeroHeartPulse: React.FC = () => {
   const { language } = useLanguage();
@@ -35,7 +35,7 @@ export const HeroHeartPulse: React.FC = () => {
       {/* The Central Red Heart with Running White Pulse */}
       <div className="relative z-10 flex flex-col items-center justify-center">
         {/* Heart container with rhythmic heartbeat bounce */}
-        <div className="relative w-56 h-56 sm:w-64 sm:h-64 flex items-center justify-center animate-[heartbeat_1.8s_ease-in-out_infinite]">
+        <div className="relative w-52 h-52 sm:w-64 sm:h-64 flex items-center justify-center animate-heartbeat">
           {/* Outer glowing aura */}
           <div className="absolute inset-0 rounded-full bg-primary/30 blur-2xl transform scale-110" />
 
@@ -135,44 +135,6 @@ export const HeroHeartPulse: React.FC = () => {
           <span>Active</span>
         </div>
       </div>
-
-      {/* Embedded CSS for animations */}
-      <style jsx>{`
-        @keyframes heartbeat {
-          0%,
-          100% {
-            transform: scale(1);
-          }
-          14% {
-            transform: scale(1.07);
-          }
-          28% {
-            transform: scale(1);
-          }
-          42% {
-            transform: scale(1.09);
-          }
-          70% {
-            transform: scale(1);
-          }
-        }
-
-        .pulse-path {
-          stroke-dasharray: 60 180;
-          stroke-dashoffset: 240;
-          animation: pulseRun 1.8s linear infinite;
-        }
-
-        @keyframes pulseRun {
-          0% {
-            stroke-dashoffset: 240;
-          }
-          100% {
-            stroke-dashoffset: 0;
-          }
-        }
-      `}</style>
     </div>
   );
 };
-
