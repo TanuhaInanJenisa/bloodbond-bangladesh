@@ -1,5 +1,6 @@
 import { BloodRequest, Campaign, DonationRecord, DonorProfile, Organization, UserProfile } from "@/types/database";
 import { INITIAL_CAMPAIGNS, INITIAL_DONATION_RECORDS, INITIAL_DONORS, INITIAL_ORGANIZATIONS, INITIAL_REQUESTS } from "./mockStore";
+import { FirebaseService } from "@/lib/firebase/firestoreService";
 
 const STORAGE_KEYS = {
   DONORS: "bloodbond_donors_v1",
@@ -122,6 +123,10 @@ export class BloodBondRepository {
     const updated = [newDonor, ...donors];
     safeSet(STORAGE_KEYS.DONORS, updated);
     this.setCurrentUser(newProfile);
+
+    // Sync to Firestore if configured
+    FirebaseService.createDonor(newDonor).catch((e) => console.warn("Firebase sync error", e));
+
     return newDonor;
   }
 
@@ -138,6 +143,11 @@ export class BloodBondRepository {
       return d;
     });
     safeSet(STORAGE_KEYS.DONORS, updated);
+
+    // Sync to Firestore if configured
+    FirebaseService.updateDonorAvailability(donorId, isAvailable, !isAvailable).catch((e) =>
+      console.warn("Firebase sync error", e)
+    );
   }
 
   // BLOOD REQUESTS
@@ -159,6 +169,10 @@ export class BloodBondRepository {
     };
     const updated = [newReq, ...requests];
     safeSet(STORAGE_KEYS.REQUESTS, updated);
+
+    // Sync to Firestore if configured
+    FirebaseService.createBloodRequest(newReq).catch((e) => console.warn("Firebase sync error", e));
+
     return newReq;
   }
 

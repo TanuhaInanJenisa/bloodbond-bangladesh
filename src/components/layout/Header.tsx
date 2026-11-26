@@ -49,13 +49,17 @@ export const Header: React.FC = () => {
       <div className="container mx-auto flex h-20 items-center justify-between px-4 sm:px-6">
         {/* Brand Logo */}
         <Link href="/" className="flex items-center gap-3 group">
-          <div className="relative w-12 h-12 flex-shrink-0 transition-transform group-hover:scale-105">
+          <div
+            className="relative w-12 h-12 flex-shrink-0 transition-transform group-hover:scale-105"
+            style={{ width: "48px", height: "48px", maxWidth: "48px", maxHeight: "48px" }}
+          >
             <Image
               src="/images/bloodbond-logo.png"
               alt="BloodBond Bangladesh Logo"
               width={48}
               height={48}
               className="w-12 h-12 object-contain"
+              style={{ width: "48px", height: "48px", objectFit: "contain" }}
               priority
             />
           </div>

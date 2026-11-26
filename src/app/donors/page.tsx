@@ -9,6 +9,7 @@ import { DonorProfile } from "@/types/database";
 import { BloodBondRepository } from "@/lib/data/repository";
 import {
   BANGLADESH_DIVISIONS,
+  BANGLADESH_DISTRICTS,
   getDistricts,
   getUpazilas,
 } from "@/lib/data/bangladeshGeo";
@@ -48,9 +49,21 @@ function DonorsSearchContent() {
   // Donors Results
   const [donors, setDonors] = useState<DonorProfile[]>([]);
 
-  const districts = getDistricts(division || undefined);
-  const upazilas = getUpazilas(district || undefined, division || undefined);
+  const districts = getDistricts(division);
+  const upazilas = getUpazilas(district, division);
   const bloodGroups = ["ALL", "A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+  // Sync state when URL searchParams update
+  useEffect(() => {
+    const div = searchParams.get("division");
+    const dist = searchParams.get("district");
+    const upa = searchParams.get("upazila");
+    const bg = searchParams.get("bloodGroup");
+    if (div !== null) setDivision(div);
+    if (dist !== null) setDistrict(dist);
+    if (upa !== null) setUpazila(upa);
+    if (bg !== null) setBloodGroup(bg);
+  }, [searchParams]);
 
   useEffect(() => {
     const list = BloodBondRepository.searchDonors({
@@ -162,13 +175,21 @@ function DonorsSearchContent() {
               <select
                 value={division}
                 onChange={(e) => {
-                  setDivision(e.target.value);
-                  setDistrict("");
-                  setUpazila("");
+                  const divId = e.target.value;
+                  setDivision(divId);
+                  if (district) {
+                    const distObj = BANGLADESH_DISTRICTS.find((d) => d.id === district);
+                    if (divId && distObj && distObj.divisionId !== divId) {
+                      setDistrict("");
+                      setUpazila("");
+                    }
+                  }
                 }}
                 className="w-full py-2 px-3 bg-muted/60 border border-border rounded-xl text-xs sm:text-sm text-foreground focus:outline-none"
               >
-                <option value="">{t("selectDivision")}</option>
+                <option value="">
+                  {language === "bn" ? "সব বিভাগ (বাংলাদেশ)" : "All Divisions"}
+                </option>
                 {BANGLADESH_DIVISIONS.map((div) => (
                   <option key={div.id} value={div.id}>
                     {language === "bn" ? div.bnName : div.name}
@@ -185,17 +206,51 @@ function DonorsSearchContent() {
               <select
                 value={district}
                 onChange={(e) => {
-                  setDistrict(e.target.value);
+                  const distId = e.target.value;
+                  setDistrict(distId);
                   setUpazila("");
+                  if (distId) {
+                    const distObj = BANGLADESH_DISTRICTS.find((d) => d.id === distId);
+                    if (distObj && distObj.divisionId !== division) {
+                      setDivision(distObj.divisionId);
+                    }
+                  }
                 }}
                 className="w-full py-2 px-3 bg-muted/60 border border-border rounded-xl text-xs sm:text-sm text-foreground focus:outline-none"
               >
-                <option value="">{t("selectDistrict")}</option>
-                {districts.map((dist) => (
-                  <option key={dist.id} value={dist.id}>
-                    {language === "bn" ? dist.bnName : dist.name}
-                  </option>
-                ))}
+                <option value="">
+                  {division
+                    ? language === "bn"
+                      ? "সকল জেলা (এই বিভাগ)"
+                      : "All Districts in Division"
+                    : language === "bn"
+                    ? "জেলা নির্বাচন করুন"
+                    : "Select District"}
+                </option>
+
+                {division ? (
+                  districts.map((dist) => (
+                    <option key={dist.id} value={dist.id}>
+                      {language === "bn" ? dist.bnName : dist.name}
+                    </option>
+                  ))
+                ) : (
+                  BANGLADESH_DIVISIONS.map((div) => {
+                    const divDistricts = BANGLADESH_DISTRICTS.filter((d) => d.divisionId === div.id);
+                    return (
+                      <optgroup
+                        key={div.id}
+                        label={language === "bn" ? `— ${div.bnName} বিভাগ —` : `— ${div.name} Division —`}
+                      >
+                        {divDistricts.map((dist) => (
+                          <option key={dist.id} value={dist.id}>
+                            {language === "bn" ? dist.bnName : dist.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    );
+                  })
+                )}
               </select>
             </div>
 
@@ -207,23 +262,56 @@ function DonorsSearchContent() {
               <select
                 value={upazila}
                 onChange={(e) => {
-                  const val = e.target.value;
-                  setUpazila(val);
-                  if (val) {
-                    const found = upazilas.find((u) => u.id === val);
-                    if (found && !district) {
+                  const upaId = e.target.value;
+                  setUpazila(upaId);
+                  if (upaId && !district) {
+                    const found = upazilas.find((u) => u.id === upaId);
+                    if (found) {
                       setDistrict(found.districtId);
+                      const distObj = BANGLADESH_DISTRICTS.find((d) => d.id === found.districtId);
+                      if (distObj && !division) setDivision(distObj.divisionId);
                     }
                   }
                 }}
                 className="w-full py-2 px-3 bg-muted/60 border border-border rounded-xl text-xs sm:text-sm text-foreground focus:outline-none"
               >
-                <option value="">{t("selectThana")}</option>
-                {upazilas.map((upa) => (
-                  <option key={upa.id} value={upa.id}>
-                    {language === "bn" ? upa.bnName : upa.name}
-                  </option>
-                ))}
+                <option value="">
+                  {district
+                    ? language === "bn"
+                      ? "সকল থানা/উপজেলা"
+                      : "All Thanas/Upazilas"
+                    : division
+                    ? language === "bn"
+                      ? "থানা বেছে নিন"
+                      : "Select Thana"
+                    : language === "bn"
+                    ? "প্রথমে জেলা বা বিভাগ বেছে নিন"
+                    : "Select District First"}
+                </option>
+                {district ? (
+                  upazilas.map((upa) => (
+                    <option key={upa.id} value={upa.id}>
+                      {language === "bn" ? upa.bnName : upa.name}
+                    </option>
+                  ))
+                ) : division ? (
+                  districts.map((dist) => {
+                    const distUpas = getUpazilas(dist.id);
+                    if (distUpas.length === 0) return null;
+                    return (
+                      <optgroup
+                        key={dist.id}
+                        label={language === "bn" ? `— ${dist.bnName} জেলা —` : `— ${dist.name} District —`}
+                      >
+                        {distUpas.map((upa) => (
+                          <option key={upa.id} value={upa.id}>
+                            {language === "bn" ? upa.bnName : upa.name}
+                          </option>
+                        ))}
+                      </optgroup>
+                    );
+                  })
+                ) : null}
               </select>
             </div>
 

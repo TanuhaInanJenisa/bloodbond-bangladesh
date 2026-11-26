@@ -6,7 +6,6 @@ import { useLanguage } from "@/context/LanguageContext";
 import {
   BANGLADESH_DIVISIONS,
   BANGLADESH_DISTRICTS,
-  BANGLADESH_UPAZILAS,
   getDistricts,
   getUpazilas,
 } from "@/lib/data/bangladeshGeo";
@@ -21,10 +20,54 @@ export const HomeSearchBar: React.FC = () => {
   const [selectedUpazila, setSelectedUpazila] = useState<string>("");
   const [selectedBloodGroup, setSelectedBloodGroup] = useState<string>("");
 
-  const availableDistricts = getDistricts(selectedDivision || undefined);
-  const availableUpazilas = getUpazilas(selectedDistrict || undefined, selectedDivision || undefined);
+  // Districts for current division (or all if none selected)
+  const availableDistricts = getDistricts(selectedDivision);
+
+  // Upazilas for current selection
+  const availableUpazilas = getUpazilas(selectedDistrict, selectedDivision);
 
   const bloodGroups = ["A+", "A-", "B+", "B-", "AB+", "AB-", "O+", "O-"];
+
+  // When division changes:
+  const handleDivisionChange = (divId: string) => {
+    setSelectedDivision(divId);
+    // If current selected district doesn't belong to the new division, clear it
+    if (selectedDistrict) {
+      const distObj = BANGLADESH_DISTRICTS.find((d) => d.id === selectedDistrict);
+      if (divId && distObj && distObj.divisionId !== divId) {
+        setSelectedDistrict("");
+        setSelectedUpazila("");
+      }
+    }
+  };
+
+  // When district changes:
+  const handleDistrictChange = (distId: string) => {
+    setSelectedDistrict(distId);
+    setSelectedUpazila(""); // reset thana
+    if (distId) {
+      const distObj = BANGLADESH_DISTRICTS.find((d) => d.id === distId);
+      if (distObj && distObj.divisionId !== selectedDivision) {
+        // Auto-select the division this district belongs to
+        setSelectedDivision(distObj.divisionId);
+      }
+    }
+  };
+
+  // When thana changes:
+  const handleUpazilaChange = (upaId: string) => {
+    setSelectedUpazila(upaId);
+    if (upaId && !selectedDistrict) {
+      const upaList = availableUpazilas.find((u) => u.id === upaId);
+      if (upaList) {
+        setSelectedDistrict(upaList.districtId);
+        const distObj = BANGLADESH_DISTRICTS.find((d) => d.id === upaList.districtId);
+        if (distObj && !selectedDivision) {
+          setSelectedDivision(distObj.divisionId);
+        }
+      }
+    }
+  };
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,29 +98,20 @@ export const HomeSearchBar: React.FC = () => {
           </div>
         </div>
 
-        {/* Division Selector */}
-        <div className="flex-1 min-w-[140px] flex flex-col justify-center px-2 py-1 bg-muted/50 rounded-xl border border-border/60">
+        {/* 1. Division Selector (বিভাগ) */}
+        <div className="flex-1 min-w-[140px] flex flex-col justify-center px-2 py-1 bg-muted/50 rounded-xl border border-border/60 hover:border-primary/50 transition-colors">
           <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
             <MapPin className="w-3 h-3 text-primary" />
             {t("division")}
           </label>
           <select
             value={selectedDivision}
-            onChange={(e) => {
-              const divId = e.target.value;
-              setSelectedDivision(divId);
-              // If current district doesn't belong to this division, reset it
-              if (divId) {
-                const distObj = BANGLADESH_DISTRICTS.find((d) => d.id === selectedDistrict);
-                if (distObj && distObj.divisionId !== divId) {
-                  setSelectedDistrict("");
-                  setSelectedUpazila("");
-                }
-              }
-            }}
+            onChange={(e) => handleDivisionChange(e.target.value)}
             className="w-full bg-transparent text-sm font-semibold text-foreground focus:outline-none cursor-pointer py-1"
           >
-            <option value="">{t("selectDivision")}</option>
+            <option value="">
+              {language === "bn" ? "সব বিভাগ (বাংলাদেশ)" : "All Divisions"}
+            </option>
             {BANGLADESH_DIVISIONS.map((div) => (
               <option key={div.id} value={div.id}>
                 {language === "bn" ? div.bnName : div.name}
@@ -86,73 +120,111 @@ export const HomeSearchBar: React.FC = () => {
           </select>
         </div>
 
-        {/* District Selector */}
-        <div className="flex-1 min-w-[140px] flex flex-col justify-center px-2 py-1 bg-muted/50 rounded-xl border border-border/60">
+        {/* 2. District Selector (বিভাগের আন্ডারে জেলা) */}
+        <div className="flex-1 min-w-[150px] flex flex-col justify-center px-2 py-1 bg-muted/50 rounded-xl border border-border/60 hover:border-primary/50 transition-colors">
           <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
             <Building className="w-3 h-3 text-primary" />
             {t("district")}
           </label>
           <select
             value={selectedDistrict}
-            onChange={(e) => {
-              const distId = e.target.value;
-              setSelectedDistrict(distId);
-              if (distId) {
-                // Auto-fill division
-                const found = BANGLADESH_DISTRICTS.find((d) => d.id === distId);
-                if (found) {
-                  setSelectedDivision(found.divisionId);
-                }
-              }
-              setSelectedUpazila("");
-            }}
+            onChange={(e) => handleDistrictChange(e.target.value)}
             className="w-full bg-transparent text-sm font-semibold text-foreground focus:outline-none cursor-pointer py-1"
           >
-            <option value="">{t("selectDistrict")}</option>
-            {availableDistricts.map((dist) => (
-              <option key={dist.id} value={dist.id}>
-                {language === "bn" ? dist.bnName : dist.name}
-              </option>
-            ))}
+            <option value="">
+              {selectedDivision
+                ? language === "bn"
+                  ? "সকল জেলা (এই বিভাগ)"
+                  : "All Districts in Division"
+                : language === "bn"
+                ? "জেলা নির্বাচন করুন"
+                : "Select District"}
+            </option>
+
+            {selectedDivision ? (
+              // When division is selected: show only districts of that division
+              availableDistricts.map((dist) => (
+                <option key={dist.id} value={dist.id}>
+                  {language === "bn" ? dist.bnName : dist.name}
+                </option>
+              ))
+            ) : (
+              // When no division selected: show all districts grouped under each division
+              BANGLADESH_DIVISIONS.map((div) => {
+                const divDistricts = BANGLADESH_DISTRICTS.filter((d) => d.divisionId === div.id);
+                return (
+                  <optgroup
+                    key={div.id}
+                    label={language === "bn" ? `— ${div.bnName} বিভাগ —` : `— ${div.name} Division —`}
+                  >
+                    {divDistricts.map((dist) => (
+                      <option key={dist.id} value={dist.id}>
+                        {language === "bn" ? dist.bnName : dist.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })
+            )}
           </select>
         </div>
 
-        {/* Upazila / Thana Selector */}
-        <div className="flex-1 min-w-[140px] flex flex-col justify-center px-2 py-1 bg-muted/50 rounded-xl border border-border/60">
+        {/* 3. Upazila / Thana Selector (জেলার আন্ডারে থানা) */}
+        <div className="flex-1 min-w-[150px] flex flex-col justify-center px-2 py-1 bg-muted/50 rounded-xl border border-border/60 hover:border-primary/50 transition-colors">
           <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
             <MapPin className="w-3 h-3 text-primary" />
             {t("thana")}
           </label>
           <select
             value={selectedUpazila}
-            onChange={(e) => {
-              const upaId = e.target.value;
-              setSelectedUpazila(upaId);
-              if (upaId) {
-                // Auto-fill district and division
-                const foundUpa = availableUpazilas.find((u) => u.id === upaId) || BANGLADESH_UPAZILAS.find((u) => u.id === upaId);
-                if (foundUpa) {
-                  setSelectedDistrict(foundUpa.districtId);
-                  const foundDist = BANGLADESH_DISTRICTS.find((d) => d.id === foundUpa.districtId);
-                  if (foundDist) {
-                    setSelectedDivision(foundDist.divisionId);
-                  }
-                }
-              }
-            }}
+            onChange={(e) => handleUpazilaChange(e.target.value)}
             className="w-full bg-transparent text-sm font-semibold text-foreground focus:outline-none cursor-pointer py-1"
           >
-            <option value="">{t("selectThana")}</option>
-            {availableUpazilas.map((upa) => (
-              <option key={upa.id} value={upa.id}>
-                {language === "bn" ? upa.bnName : upa.name}
-              </option>
-            ))}
+            <option value="">
+              {selectedDistrict
+                ? language === "bn"
+                  ? "সকল থানা/উপজেলা"
+                  : "All Thanas/Upazilas"
+                : selectedDivision
+                ? language === "bn"
+                  ? "থানা বেছে নিন (বা জেলা বেছে নিন)"
+                  : "Select Thana or District"
+                : language === "bn"
+                ? "প্রথমে জেলা বা বিভাগ বেছে নিন"
+                : "Select District First"}
+            </option>
+
+            {selectedDistrict ? (
+              // If district is selected, show its upazilas
+              availableUpazilas.map((upa) => (
+                <option key={upa.id} value={upa.id}>
+                  {language === "bn" ? upa.bnName : upa.name}
+                </option>
+              ))
+            ) : selectedDivision ? (
+              // If division is selected, show upazilas grouped by district
+              availableDistricts.map((dist) => {
+                const distUpas = getUpazilas(dist.id);
+                if (distUpas.length === 0) return null;
+                return (
+                  <optgroup
+                    key={dist.id}
+                    label={language === "bn" ? `— ${dist.bnName} জেলা —` : `— ${dist.name} District —`}
+                  >
+                    {distUpas.map((upa) => (
+                      <option key={upa.id} value={upa.id}>
+                        {language === "bn" ? upa.bnName : upa.name}
+                      </option>
+                    ))}
+                  </optgroup>
+                );
+              })
+            ) : null}
           </select>
         </div>
 
-        {/* Blood Group Selector */}
-        <div className="flex-1 min-w-[130px] flex flex-col justify-center px-2 py-1 bg-muted/50 rounded-xl border border-border/60">
+        {/* 4. Blood Group Selector */}
+        <div className="flex-1 min-w-[130px] flex flex-col justify-center px-2 py-1 bg-muted/50 rounded-xl border border-border/60 hover:border-primary/50 transition-colors">
           <label className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground flex items-center gap-1">
             <Droplets className="w-3 h-3 text-primary" />
             {t("bloodGroup")}
